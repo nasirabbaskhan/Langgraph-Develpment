@@ -16,6 +16,10 @@ tavily-python = "^0.5.1"
 langchain-community = "^0.3.17"
 langchain-groq = "^0.2.4"
 duckduckgo-search = "^7.3.2"
+psycopg-pool = "^3.2.6"
+psycopg = "^3.2.5"
+psycopg-binary = "^3.2.5"
+langgraph-checkpoint-postgres = "^2.0.15"
 
 
 

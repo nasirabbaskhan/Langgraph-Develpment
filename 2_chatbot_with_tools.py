@@ -17,22 +17,7 @@ GROQ_API_KEY  = os.getenv("GROQ_API_KEY")
 
 tavily_api_key = os.getenv("Tavily_API_KEY")
 
-
-# defining state
-class State(TypedDict):
-    messages:Annotated[list, add_messages]
-   
-    
-# defining  StateGraph
-graph_builder = StateGraph(State)
-
-
-# defining llm  -->> ChatGoogleGenerativeAI have issue to call the tools
-# llm = ChatGoogleGenerativeAI(
-#     model="gemini-1.5-flash",
-#     temperature=0.2
-# )
-
+#********************************* Defining llm ********************************
 
 llm = ChatGroq(   
     # model= "Gemma2-9b-It"
@@ -40,6 +25,14 @@ llm = ChatGroq(
     temperature=0,
     stop_sequences=""
 )
+
+# defining llm  -->> ChatGoogleGenerativeAI have issue to call the tools
+# llm = ChatGoogleGenerativeAI(
+#     model="gemini-1.5-flash",
+#     temperature=0.2
+# )
+
+#********************************* defining tool for web searching ********************************
 
 # tool for web searching
 search_tool = TavilySearchResults(
@@ -55,10 +48,20 @@ tools = [search_tool]
 # bind the toos with llm
 llm_with_tools = llm.bind_tools(tools)
 
-# defining chatbot function
+#****************************** defining state and nodes ********************************e
+
+# defining state
+class State(TypedDict):
+    messages:Annotated[list, add_messages]
+    
+# defining chatbot node function
 def chatbot(state:State):
     return {"messages": [llm_with_tools.invoke(state["messages"])]}
+   
+#******************************  adding nodes and edges **********************************
 
+# defining  StateGraph
+graph_builder = StateGraph(State)
 
 # Add Nodes and edges
 graph_builder.add_node("chatbot", chatbot)
@@ -71,6 +74,8 @@ graph_builder.add_edge("tools","chatbot" )
 
 # compile the graph
 graph = graph_builder.compile()
+
+#*************************** stream Update and run chatbot in loop  ********************************e
 
 # stream Update
 def stream_graph_update(user_input:str):

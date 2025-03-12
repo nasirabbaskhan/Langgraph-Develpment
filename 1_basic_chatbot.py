@@ -9,34 +9,40 @@ load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# step 1: Defining State
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
-    
-    
-# step 2: inililizing StateGraph
-graph_builder = StateGraph(State)
+#********************************* Defining llm ********************************
 
-# step 3 initilize the LLM
+# initilize the LLM
 llm = GoogleGenerativeAI(
     model="gemini-1.5-flash",
     temperature=0.2
 )
 
-# Defining the chatbot function
+#****************************** defining state and nodes ********************************e
+
+# Defining State
+class State(TypedDict):
+    messages: Annotated[list, add_messages]
+    
+# defining chatbot node function
 def chatbot(state:State):
     response = llm.invoke(state["messages"])
     return {"messages": [{"role": "assistant", "content": response}]}
     # return {"messages": [llm.invoke(state["messages"])]}
 
 
-# Add Nodes and edges
+#******************************  adding nodes and edges **********************************
+    
+# inililizing StateGraph
+graph_builder = StateGraph(State)
+
 graph_builder.add_node("chatbot",chatbot)
 graph_builder.add_edge(START, "chatbot")
 graph_builder.add_edge("chatbot", END)
 
 # compile the graph
 graph = graph_builder.compile()
+
+#*************************** stream Update and run chatbot in loop  ********************************e
 
 # stream Update
 def stream_graph_updates(user_input:str):

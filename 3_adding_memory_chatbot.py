@@ -1,15 +1,16 @@
+# langchain
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_community.tools import TavilySearchResults
-
+# langgraph
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-
 from langgraph.checkpoint.memory import MemorySaver # for story memory
-
+# typing
 from typing import Annotated
 from typing_extensions import TypedDict
+# env
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -19,22 +20,7 @@ GROQ_API_KEY  = os.getenv("GROQ_API_KEY")
 
 tavily_api_key = os.getenv("Tavily_API_KEY")
 
-
-# defining state
-class State(TypedDict):
-    messages:Annotated[list, add_messages]
-   
-    
-# defining  StateGraph
-graph_builder = StateGraph(State)
-
-
-# defining llm  -->> ChatGoogleGenerativeAI have issue to call the tools
-# llm = ChatGoogleGenerativeAI(
-#     model="gemini-1.5-flash",
-#     temperature=0.2
-# )
-
+#********************************* Defining llm ********************************
 
 llm = ChatGroq(   
     # model= "Gemma2-9b-It"
@@ -42,6 +28,8 @@ llm = ChatGroq(
     temperature=0,
     stop_sequences=""
 )
+
+#********************************* defining tool for web searching ********************************
 
 # tool for web searching
 search_tool = TavilySearchResults(
@@ -57,11 +45,23 @@ tools = [search_tool]
 # bind the toos with llm
 llm_with_tools = llm.bind_tools(tools)
 
-# defining chatbot function
+#****************************** defining state and nodes ********************************e
+
+# defining state
+class State(TypedDict):
+    messages:Annotated[list, add_messages]
+   
+    
+
+# defining chatbot node function
 def chatbot(state:State):
     return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
 
+#******************************  adding nodes and edges **********************************
+
+# defining  StateGraph
+graph_builder = StateGraph(State)
 # Add Nodes and edges
 graph_builder.add_node("chatbot", chatbot)
 graph_builder.add_node("tools", ToolNode(tools))
@@ -75,7 +75,7 @@ graph_builder.add_edge("tools","chatbot" )
 memory = MemorySaver()
 graph = graph_builder.compile(checkpointer=memory)
 
-
+#*************************** stream Update and run chatbot in loop  ********************************e
 
 # stream Update
 def stream_graph_update(user_input:str):

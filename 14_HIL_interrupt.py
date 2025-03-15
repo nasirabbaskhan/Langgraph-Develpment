@@ -63,10 +63,6 @@ def stream_graph_update(user_input:str):
     for event in graph.stream(Command(resume=user_input),thread):
         print(event)
             
-# generating response
-# response = stream_graph_update("who is the curent presedent of Iran")
-# print(response)    
-
 # run chatbot in loop    
 while True:
     try:

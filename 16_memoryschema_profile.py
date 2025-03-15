@@ -1,5 +1,6 @@
 # langchain
 from langchain_google_genai import GoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables.config import RunnableConfig
 # langgraph
@@ -22,11 +23,12 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 # #********************************* Defining llm ********************************
 
 # # initilize the LLM
-llm = GoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    temperature=0.2
+llm = ChatGroq(   
+    model= "Gemma2-9b-It",
+    # model="Llama3-8b-8192",
+    temperature=0,
+    stop_sequences=""
 )
-
 
 # #********************************* Defining schema and trustcall ********************************
 
@@ -46,8 +48,6 @@ trustcall_extractor = create_extractor(
 )
 
 # #****************************** defining instruction for nodes *********************************
-
-
     
 # Chatbot instruction
 MODEL_SYSTEM_MESSAGE = """You are a helpful assistant with memory that provides information about the user. 
@@ -55,8 +55,9 @@ If you have memory for this user, use it to personalize your responses.
 Here is the memory (it may be empty): {memory}"""
 
 # Extraction instruction
-TRUSTCALL_INSTRUCTION = """Create or update the memory (JSON doc) to incorporate information from the following conversation:"""
-
+TRUSTCALL_INSTRUCTION = """Extract relevant user details from the conversation and update the memory.
+Ensure the response follows the exact structure of the provided JSON schema.
+If no relevant details are found, return an empty profile."""
 
 # #****************************** defining nodes *********************************
 # node
@@ -69,7 +70,8 @@ def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
 
     # Retrieve memory from the store
     namespace = ("memory", user_id)
-    existing_memory = store.get(namespace, "user_memory")
+    key = "user_memory"
+    existing_memory = store.get(namespace, key)
 
     # Format the memories for the system prompt
     if existing_memory and existing_memory.value:
@@ -100,7 +102,8 @@ def write_memory(state: MessagesState, config: RunnableConfig, store: BaseStore)
 
     # Retrieve existing memory from the store
     namespace = ("memory", user_id)
-    existing_memory = store.get(namespace, "user_memory")
+    key = "user_memory"
+    existing_memory = store.get(namespace, key)
         
     # Get the profile as the value from the list, and convert it to a JSON doc
     existing_profile = {"UserProfile": existing_memory.value} if existing_memory else None
@@ -134,7 +137,7 @@ within_thread_memory = MemorySaver()
 graph = builder.compile(checkpointer=within_thread_memory, store=across_thread_memory)
 
 
-# #*************************** stream Update and run chatbot in loop  ********************************e
+# #*************************** stream Update and run chatbot in loop *****************************************
 
 # # stream Update
 def stream_graph_update(user_input:str):

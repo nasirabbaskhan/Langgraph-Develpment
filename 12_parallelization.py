@@ -107,5 +107,5 @@ builder.add_edge("generate_answer", END)
 graph = builder.compile()
 
 # ivoking the graph
-result = graph.invoke({"question": "How were Nvidia's Q2 2024 earnings"})
+result = graph.invoke({"question": "what is langgaph"})
 print(result['answer'].content)

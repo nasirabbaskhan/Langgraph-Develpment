@@ -81,7 +81,7 @@ def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
     system_msg = MODEL_SYSTEM_MESSAGE.format(memory=existing_memory_content)
 
     # Respond using memory as well as the chat history
-    response = llm.invoke([SystemMessage(content=system_msg)]+state["messages"])
+    response = llm.invoke([SystemMessage(content=system_msg)] + state["messages"])
 
     return {"messages": response}
 
@@ -112,7 +112,7 @@ def write_memory(state: MessagesState, config: RunnableConfig, store: BaseStore)
     key = "user_memory"
 
     # Write value as a dictionary with a memory key
-    store.put(namespace, key, {"memory": new_memory.content})
+    store.put(namespace, key, {"memory": new_memory})
 
 #******************************  adding nodes and edges **********************************
 # Define the graph
